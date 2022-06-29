@@ -1,24 +1,23 @@
-import { useRouter } from "next/router";
+// import { useRouter } from "next/router";
 import { Fragment } from "react";
+
 import EventContent from "../../components/event-detail/event-content.js";
 import EventLogistics from "../../components/event-detail/event-logistics";
 import EventSummary from "../../components/event-detail/event-summary";
 import ErrorAlert from "../../components/ui/error-alert.js";
 import Button from "../../components/ui/button.js";
 
-import { getEventBYId } from "../../dummy-data";
+import { getEventBYId, getFeaturedEvents } from "../../helpers/api-utils";
 
-const EventDetailPage = () => {
-  const router = useRouter();
-  console.log(router.query);
-  const eventId = router.query.eventId;
-  const event = getEventBYId(eventId);
+const EventDetailPage = (props) => {
+  // const router = useRouter();
+  // const eventId = router.query.eventId;
+  const event = props.selectedEvent;
 
   if(!event.length) {
     return (
       <ErrorAlert>
-        <p style={{ marginBottom: "25px" }}>No event Found!</p>
-        <Button link="/events">Show all events</Button>
+        Loading...
       </ErrorAlert>
     );
   }
@@ -42,5 +41,28 @@ const EventDetailPage = () => {
 }
 
 export default EventDetailPage;
+
+export async function getStaticProps(context) {
+  const eventId = context.params.eventId;
+
+  const event = await getEventBYId(eventId);
+
+  return {
+    props: {
+      selectedEvent: event
+    },
+    revalidate: 30
+  };
+}
+
+export async function getStaticPaths() {
+  const events = await getFeaturedEvents(); //fetching all events may not be suitable for large list of events
+
+  const paths = events.map(event => ({params: {eventId: event.id}}));
+  return {
+    paths,
+    fallback: true
+  }
+}
 
 // <Fragment> allows to have adjacent element
